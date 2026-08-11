@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.example.ask-jdp</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/absolute/path/to/node</string>
+    <string>/absolute/path/to/ask-jdp/scripts/start-keychain.mjs</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/absolute/path/to/ask-jdp</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/local/bin:/usr/bin:/bin</string>
+    <key>SOCRATINK_BASE_URL</key>
+    <string>https://provider.example/v1</string>
+    <key>PUBLIC_ORIGIN</key>
+    <string>https://ask-jdp.example</string>
+    <key>ASK_JDP_API_KEYCHAIN_SERVICE</key>
+    <string>ask-jdp-api-key</string>
+    <key>ASK_JDP_SESSION_KEYCHAIN_SERVICE</key>
+    <string>ask-jdp-session-secret</string>
+    <key>ASK_JDP_LOG_DIRECTORY</key>
+    <string>/absolute/path/to/logs</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>StandardOutPath</key>
+  <string>/absolute/path/to/logs/service.log</string>
+  <key>StandardErrorPath</key>
+  <string>/absolute/path/to/logs/service-error.log</string>
+</dict>
+</plist>

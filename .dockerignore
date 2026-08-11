@@ -1,0 +1,9 @@
+.git
+.github
+.env*
+data
+design
+dist
+node_modules
+tests
+*.log
