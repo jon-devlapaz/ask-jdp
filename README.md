@@ -6,7 +6,9 @@ Ask JDP is a quiet, employer-facing interface for exploring Jonathan De La Paz's
 
 The composer uses the MIT-licensed `border-beam` pulse and the live answer state uses the MIT-licensed `thinking-orbs` canvas. The pulse library injects a scoped style block, so the CSP permits inline style elements while retaining a self-only script policy.
 
-The evidence in `src/knowledge/corpus.ts` is Jonathan's reviewed, public-facing corpus. It is included as an example of evidence-bounded assistant grounding, not as a generic résumé template. Replace it with your own reviewed material before adapting the assistant for another person.
+The assistant's knowledge corpus lives in `src/knowledge/corpus.ts` and remains server-only. Raw résumés, claim ledgers, and other private source documents stay outside this repository; the corpus contains only facts reviewed for public use.
+
+To add a source, review it manually, add only its verified public-safe facts to `ASK_JDP_KNOWLEDGE`, and update `CORPUS_PROVENANCE` (and `PUBLIC_SOURCE_LABEL` when the displayed source categories change). Do not copy or ingest the source document itself. Before adapting the assistant for another person, replace the included corpus with material reviewed for that person.
 
 ## Local development
 
