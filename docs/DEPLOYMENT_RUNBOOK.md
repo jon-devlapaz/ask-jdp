@@ -24,6 +24,34 @@ and stable session secret remain in their configured macOS Keychain items.
 | Portfolio | `d1c06dfdb453f3cf29b27f19771b6ea509b49b27` (`d1c06df`) |
 | Portfolio integration commits | `55d36bf` Add Ask JDP portfolio entry; `2ca1b1a` Update Ask JDP portfolio link; `65b50dc` Promote Ask JDP in portfolio navigation |
 
+## Production release evidence — 2026-08-13
+
+- Application code: `0a6aba1754379fbfeffcab9608f6e9a9766bfb36`
+  (`0a6aba1`), pushed to `origin/main`.
+- Deployment completed: `2026-08-13T03:02:53Z`.
+- Runtime: the ownership-verified `com.jondev.ask-jdp` LaunchAgent was reloaded
+  from this checkout with `SOCRATINK_MODEL_ID=gpt-oss-120b`; its replacement
+  Node process listened only on `127.0.0.1:3000`.
+- Ingress: Tailscale Funnel reported
+  `https://ask-jdp.marten-pollux.ts.net/ -> http://127.0.0.1:3000`.
+- Health: fresh loopback and public `/api/live` and `/api/health` probes returned
+  HTTP 200 with `{ "ok": true }`; the public root returned HTTP 200 with the
+  expected CSP and HSTS headers.
+- Deterministic candidate verification: `npm run verify` passed 6 Vitest files
+  with 44 tests, both production builds, and 8 Sites/runtime packaging tests.
+- Live provider matrix: passed factual, leadership, technical (Tink,
+  tink-skills, Socratink), unsupported-credential, direct/paraphrased/role-play/
+  raw-corpus/encoded/multi-turn prompt-injection, PHI and policy-extraction,
+  fictional-resume, third-person identity, and fabricated-citation cases on the
+  pinned production model.
+- Public browser: a clean unauthenticated session opened portfolio revision
+  `d1c06df`, followed its Ask JDP link, and received the supported current-role
+  answer plus visible evidence disclosure with no console or page errors.
+- Recovery browser: an isolated tab-local read fault kept a harmless admitted
+  question pending, produced the 60-second non-busy recovery alert, rotated to a
+  fresh signed session with the question preserved, and completed after reads
+  were restored. No shared service or provider process was changed for the test.
+
 ## Preflight and deploy
 
 1. From the Ask JDP checkout, confirm the intended release with `git rev-parse HEAD`
@@ -145,7 +173,7 @@ After withdrawing Funnel, reverse the recorded application-code commit with a
 new revert commit; do not reset the checkout or delete persistent data:
 
 ```sh
-git revert --no-edit <application-code-sha>
+git revert --no-edit 0a6aba1754379fbfeffcab9608f6e9a9766bfb36
 git push origin main
 ```
 
@@ -154,8 +182,7 @@ check, and reload only `com.jondev.ask-jdp` using the preflight procedure. Verif
 both loopback probes and a clean-browser answer before re-establishing Funnel
 with `tailscale funnel --bg --yes 3000`. If the revert conflicts or any check
 fails, keep Funnel withdrawn and stop; do not reset the repository, remove the
-SQLite database, or alter Keychain items. The release record below replaces the
-placeholder with the exact revert target before deployment is complete.
+SQLite database, or alter Keychain items.
 
 ## Portfolio discoverability rollback
 
