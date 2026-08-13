@@ -47,7 +47,7 @@ export function configureSocratinkProvider() {
           cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
           contextWindow: 128000,
           // Some routed models spend part of this budget on hidden reasoning. Keep
-          // enough headroom to finish the short public answer and source line.
+          // enough headroom to finish the short public answer.
           maxTokens: 2048,
         },
       ],

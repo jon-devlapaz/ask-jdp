@@ -10,6 +10,9 @@ const TAB_CONVERSATION_KEY = "ask_jdp_conversation_id";
 const CONVERSATION_ID_PATTERN = /^c_[A-Za-z0-9_-]{40,}$/;
 const BUSY_AGENT_STATUSES = new Set(["connecting", "submitted", "streaming"]);
 
+export const PENDING_ANSWER_REFRESH_INTERVAL_MS = 5_000;
+export const STALLED_ANSWER_TIMEOUT_MS = 60_000;
+
 const MODEL_SOURCE_LABEL =
   /\s*Reviewed resume(?: and portfolio|, portfolio, and public code)\s*[·•]\s*(?:aggregate outcomes only|aggregate and explicitly qualified individual results)\.?\s*$/i;
 
@@ -25,6 +28,57 @@ export function isBusyAgentStatus(status) {
 
 export function shouldShowAgentError(status, error) {
   return Boolean(error) && !isBusyAgentStatus(status);
+}
+
+export function recoveryMode({ hasSessionError, hasFailedSend, hasAgentError, isStalled, isUnansweredTerminal }) {
+  if (hasSessionError) return "fresh-session";
+  if (hasFailedSend) return "resend";
+  if (hasAgentError || isStalled || isUnansweredTerminal) return "fresh-session";
+  return "refresh";
+}
+
+export function recoveryIdentity(sessionId, submittedQuestion) {
+  return sessionId && submittedQuestion ? JSON.stringify([sessionId, submittedQuestion]) : "";
+}
+
+export function activeSubmittedQuestion({ submittedQuestion, isBusy, pendingQuestion, latestAnswerQuestion }) {
+  if (submittedQuestion) return submittedQuestion;
+  if (!isBusy) return "";
+  return pendingQuestion || latestAnswerQuestion || "";
+}
+
+export function submittedAnswerState({
+  sessionId,
+  submittedQuestion,
+  isBusy,
+  hasAgentError,
+  latestAnswerQuestion,
+}) {
+  const identity = recoveryIdentity(sessionId, submittedQuestion);
+
+  return {
+    identity,
+    shouldRecover: Boolean(identity && isBusy),
+    isComplete: Boolean(identity && !isBusy && !hasAgentError && latestAnswerQuestion === submittedQuestion),
+  };
+}
+
+export function isUnansweredTerminal({
+  identity,
+  observedBusyIdentity,
+  isBusy,
+  isComplete,
+  hasAgentError,
+  hasFailedSend,
+}) {
+  return Boolean(
+    identity &&
+      identity === observedBusyIdentity &&
+      !isBusy &&
+      !isComplete &&
+      !hasAgentError &&
+      !hasFailedSend,
+  );
 }
 
 function textFromMessage(message) {
@@ -176,7 +230,11 @@ export function App() {
   const [sessionId, setSessionId] = useState("");
   const [sessionError, setSessionError] = useState("");
   const [draft, setDraft] = useState("");
+  const [submittedQuestion, setSubmittedQuestion] = useState("");
+  const [stalledQuestion, setStalledQuestion] = useState("");
+  const [observedBusyIdentity, setObservedBusyIdentity] = useState("");
   const sessionController = useRef(null);
+  const refreshAgent = useRef(null);
 
   const createSession = async ({ fresh = true } = {}) => {
     sessionController.current?.abort();
@@ -184,6 +242,9 @@ export function App() {
     sessionController.current = controller;
     setSessionError("");
     setSessionId("");
+    setSubmittedQuestion("");
+    setStalledQuestion("");
+    setObservedBusyIdentity("");
 
     try {
       const response = await fetch(fresh ? "/api/session?fresh=1" : "/api/session", {
@@ -224,6 +285,71 @@ export function App() {
   const isBusy = isBusyAgentStatus(agent.status);
   const showAgentError = shouldShowAgentError(agent.status, agent.error);
   const isUnavailable = !sessionId || Boolean(sessionError);
+  const activeQuestion = activeSubmittedQuestion({
+    submittedQuestion,
+    isBusy,
+    pendingQuestion,
+    latestAnswerQuestion: latestPair?.question,
+  });
+  const submission = submittedAnswerState({
+    sessionId,
+    submittedQuestion: activeQuestion,
+    isBusy,
+    hasAgentError: Boolean(agent.error),
+    latestAnswerQuestion: latestPair?.question,
+  });
+  const isStalled = stalledQuestion === submission.identity && Boolean(submission.identity);
+  const failedQuestion = agent.failedSends.at(-1)?.message;
+  const isTerminalUnanswered = isUnansweredTerminal({
+    identity: submission.identity,
+    observedBusyIdentity,
+    isBusy,
+    isComplete: submission.isComplete,
+    hasAgentError: Boolean(agent.error),
+    hasFailedSend: Boolean(failedQuestion),
+  });
+  const isRecoveryOffered = isStalled || isTerminalUnanswered;
+  const isRecovering = isBusy && !isRecoveryOffered;
+
+  useEffect(() => {
+    refreshAgent.current = agent.refresh;
+  }, [agent.refresh]);
+
+  useEffect(() => {
+    if (!submittedQuestion && activeQuestion) setSubmittedQuestion(activeQuestion);
+  }, [activeQuestion, submittedQuestion]);
+
+  useEffect(() => {
+    if (submission.shouldRecover) setObservedBusyIdentity(submission.identity);
+  }, [submission.identity, submission.shouldRecover]);
+
+  useEffect(() => {
+    if (!submission.shouldRecover) return undefined;
+
+    const refreshInterval = window.setInterval(() => {
+      refreshAgent.current?.();
+    }, PENDING_ANSWER_REFRESH_INTERVAL_MS);
+    const stalledTimer = window.setTimeout(() => {
+      setStalledQuestion(submission.identity);
+    }, STALLED_ANSWER_TIMEOUT_MS);
+
+    return () => {
+      window.clearInterval(refreshInterval);
+      window.clearTimeout(stalledTimer);
+    };
+  }, [submission.identity, submission.shouldRecover]);
+
+  useEffect(() => {
+    if (!submission.shouldRecover || submission.isComplete) setStalledQuestion("");
+  }, [submission.isComplete, submission.shouldRecover]);
+
+  useEffect(() => {
+    if (submission.isComplete) setSubmittedQuestion("");
+  }, [submission.isComplete]);
+
+  useEffect(() => {
+    if (!submission.identity || submission.isComplete) setObservedBusyIdentity("");
+  }, [submission.identity, submission.isComplete]);
 
   async function submit(event) {
     event.preventDefault();
@@ -231,6 +357,9 @@ export function App() {
     if (!question || isBusy || isUnavailable) return;
 
     setDraft("");
+    setSubmittedQuestion(question);
+    setStalledQuestion("");
+    setObservedBusyIdentity("");
     try {
       await agent.sendMessage(question);
     } catch {
@@ -239,13 +368,18 @@ export function App() {
   }
 
   const retry = async () => {
-    if (sessionError) {
-      clearTabConversation();
-      await createSession({ fresh: true });
-      return;
-    }
-    const failedQuestion = agent.failedSends.at(-1)?.message;
-    if (failedQuestion) {
+    const mode = recoveryMode({
+      hasSessionError: Boolean(sessionError),
+      hasFailedSend: Boolean(failedQuestion),
+      hasAgentError: Boolean(agent.error),
+      isStalled,
+      isUnansweredTerminal: isTerminalUnanswered,
+    });
+
+    if (mode === "resend") {
+      setSubmittedQuestion(failedQuestion);
+      setStalledQuestion("");
+      setObservedBusyIdentity("");
       try {
         await agent.sendMessage(failedQuestion);
       } catch {
@@ -253,13 +387,23 @@ export function App() {
       }
       return;
     }
-    if (agent.error) {
+
+    if (mode === "fresh-session") {
+      const questionToPreserve = activeQuestion || pendingQuestion;
+      if (questionToPreserve) setDraft(questionToPreserve);
       clearTabConversation();
       await createSession({ fresh: true });
       return;
     }
+
     agent.refresh();
   };
+
+  const recoveryMessage = sessionError
+    ? sessionError
+    : isStalled
+      ? "This answer is taking longer than expected. Start fresh to keep your question in the composer."
+      : "The answer could not be completed.";
 
   return (
     <main className="ask-jdp-shell">
@@ -275,7 +419,7 @@ export function App() {
           </a>
         </div>
 
-        <div className="transcript" aria-live="polite" aria-busy={isBusy}>
+        <div className="transcript" aria-live="polite" aria-busy={isRecovering}>
           {pendingQuestion ? (
             <article className="answer answer-pending" aria-label="Question being considered">
               <p className="question">{pendingQuestion}</p>
@@ -285,17 +429,17 @@ export function App() {
           ) : (
             <Welcome />
           )}
-          {isBusy && pendingQuestion ? (
+          {isRecovering && activeQuestion ? (
             <p className="thinking">
               <ThinkingOrb state="connecting" size={64} speed={1.25} theme="dark" aria-hidden="true" />
               <span>Considering the evidence…</span>
             </p>
           ) : null}
-          {sessionError || showAgentError ? (
+          {sessionError || showAgentError || isRecoveryOffered ? (
             <div className="error-state" role="alert">
-              <p>{sessionError || "The answer could not be completed."}</p>
+              <p>{recoveryMessage}</p>
               <button type="button" onClick={retry}>
-                Try again
+                {isRecoveryOffered ? "Start fresh" : "Try again"}
               </button>
             </div>
           ) : null}
@@ -305,8 +449,8 @@ export function App() {
           value={draft}
           onChange={setDraft}
           onSubmit={submit}
-          disabled={isUnavailable || isBusy}
-          busy={isBusy}
+          disabled={isUnavailable || isBusy || isTerminalUnanswered}
+          busy={isRecovering}
           hasReply={hasConversation}
         />
         <PrivacyNotice />

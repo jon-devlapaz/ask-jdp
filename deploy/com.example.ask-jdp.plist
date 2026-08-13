@@ -17,6 +17,8 @@
     <string>/usr/local/bin:/usr/bin:/bin</string>
     <key>SOCRATINK_BASE_URL</key>
     <string>https://provider.example/v1</string>
+    <key>SOCRATINK_MODEL_ID</key>
+    <string>gpt-oss-120b</string>
     <key>PUBLIC_ORIGIN</key>
     <string>https://ask-jdp.example</string>
     <key>ASK_JDP_API_KEYCHAIN_SERVICE</key>

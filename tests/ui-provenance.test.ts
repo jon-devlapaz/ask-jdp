@@ -7,21 +7,154 @@ const appModule = (await import("../src/ui/App.jsx")) as unknown as {
   EVIDENCE_DISCLOSURE: string;
   MessagePair: FunctionComponent<{ question: string; answer: string }>;
   PRIVACY_NOTICE: string;
+  PENDING_ANSWER_REFRESH_INTERVAL_MS: number;
   PrivacyNotice: FunctionComponent;
+  activeSubmittedQuestion(options: {
+    submittedQuestion: string;
+    isBusy: boolean;
+    pendingQuestion?: string;
+    latestAnswerQuestion?: string;
+  }): string;
+  recoveryIdentity(sessionId: string, submittedQuestion: string): string;
+  recoveryMode(options: {
+    hasSessionError: boolean;
+    hasFailedSend: boolean;
+    hasAgentError: boolean;
+    isStalled: boolean;
+    isUnansweredTerminal?: boolean;
+  }): string;
+  isUnansweredTerminal(options: {
+    identity: string;
+    observedBusyIdentity: string;
+    isBusy: boolean;
+    isComplete: boolean;
+    hasAgentError: boolean;
+    hasFailedSend: boolean;
+  }): boolean;
+  STALLED_ANSWER_TIMEOUT_MS: number;
+  submittedAnswerState(options: {
+    sessionId: string;
+    submittedQuestion: string;
+    isBusy: boolean;
+    hasAgentError: boolean;
+    latestAnswerQuestion?: string;
+  }): { identity: string; shouldRecover: boolean; isComplete: boolean };
   shouldShowAgentError(status: string, error: Error | undefined): boolean;
   Welcome: FunctionComponent;
 };
 const {
   answerContent,
+  activeSubmittedQuestion,
   EVIDENCE_DISCLOSURE,
+  isUnansweredTerminal,
   MessagePair,
+  PENDING_ANSWER_REFRESH_INTERVAL_MS,
   PRIVACY_NOTICE,
   PrivacyNotice,
+  recoveryIdentity,
+  recoveryMode,
+  STALLED_ANSWER_TIMEOUT_MS,
+  submittedAnswerState,
   shouldShowAgentError,
   Welcome,
 } = appModule;
 
 describe("Ask JDP answer provenance", () => {
+  it("uses bounded polling and a local 60-second stalled-answer threshold", () => {
+    expect(PENDING_ANSWER_REFRESH_INTERVAL_MS).toBeGreaterThan(0);
+    expect(PENDING_ANSWER_REFRESH_INTERVAL_MS).toBeLessThan(STALLED_ANSWER_TIMEOUT_MS);
+    expect(STALLED_ANSWER_TIMEOUT_MS).toBe(60_000);
+  });
+
+  it("keeps admission retries in-session and starts fresh for unknown terminal work", () => {
+    expect(
+      recoveryMode({ hasSessionError: false, hasFailedSend: true, hasAgentError: true, isStalled: true }),
+    ).toBe("resend");
+    expect(
+      recoveryMode({ hasSessionError: false, hasFailedSend: false, hasAgentError: true, isStalled: false }),
+    ).toBe("fresh-session");
+    expect(
+      recoveryMode({ hasSessionError: false, hasFailedSend: false, hasAgentError: false, isStalled: true }),
+    ).toBe("fresh-session");
+    expect(
+      recoveryMode({ hasSessionError: false, hasFailedSend: false, hasAgentError: false, isStalled: false }),
+    ).toBe("refresh");
+    expect(
+      recoveryMode({
+        hasSessionError: false,
+        hasFailedSend: false,
+        hasAgentError: false,
+        isStalled: false,
+        isUnansweredTerminal: true,
+      }),
+    ).toBe("fresh-session");
+  });
+
+  it("offers fresh recovery only after a submission was observed busy and settles without an answer", () => {
+    const base = {
+      identity: '["c_first","What operational result did Jonathan achieve?"]',
+      observedBusyIdentity: '["c_first","What operational result did Jonathan achieve?"]',
+      isBusy: false,
+      isComplete: false,
+      hasAgentError: false,
+      hasFailedSend: false,
+    };
+
+    expect(isUnansweredTerminal(base)).toBe(true);
+    expect(isUnansweredTerminal({ ...base, observedBusyIdentity: "" })).toBe(false);
+    expect(isUnansweredTerminal({ ...base, isComplete: true })).toBe(false);
+    expect(isUnansweredTerminal({ ...base, hasAgentError: true })).toBe(false);
+    expect(isUnansweredTerminal({ ...base, hasFailedSend: true })).toBe(false);
+  });
+
+  it("keeps recovery identity stable without coupling it to agent callbacks", () => {
+    const question = "What operational result did Jonathan achieve?";
+
+    expect(recoveryIdentity("c_first", question)).toBe(recoveryIdentity("c_first", question));
+    expect(recoveryIdentity("c_second", question)).not.toBe(recoveryIdentity("c_first", question));
+    expect(recoveryIdentity("c_first", "What did Jonathan build?")).not.toBe(recoveryIdentity("c_first", question));
+    expect(recoveryIdentity("", question)).toBe("");
+  });
+
+  it("adopts only a busy stored session's observable question for recovery", () => {
+    const question = "What operational result did Jonathan achieve?";
+
+    expect(
+      activeSubmittedQuestion({ submittedQuestion: "", isBusy: true, pendingQuestion: question }),
+    ).toBe(question);
+    expect(
+      activeSubmittedQuestion({ submittedQuestion: "", isBusy: true, latestAnswerQuestion: question }),
+    ).toBe(question);
+    expect(
+      activeSubmittedQuestion({ submittedQuestion: "", isBusy: false, latestAnswerQuestion: question }),
+    ).toBe("");
+    expect(
+      activeSubmittedQuestion({ submittedQuestion: "New question", isBusy: true, pendingQuestion: question }),
+    ).toBe("New question");
+  });
+
+  it("continues recovery through partial streamed output until the submitted answer is terminal", () => {
+    const partialStream = submittedAnswerState({
+      sessionId: "c_first",
+      submittedQuestion: "What operational result did Jonathan achieve?",
+      isBusy: true,
+      hasAgentError: false,
+      latestAnswerQuestion: "What operational result did Jonathan achieve?",
+    });
+    const completedAnswer = submittedAnswerState({
+      sessionId: "c_first",
+      submittedQuestion: "What operational result did Jonathan achieve?",
+      isBusy: false,
+      hasAgentError: false,
+      latestAnswerQuestion: "What operational result did Jonathan achieve?",
+    });
+
+    expect(partialStream.shouldRecover).toBe(true);
+    expect(partialStream.isComplete).toBe(false);
+    expect(completedAnswer.shouldRecover).toBe(false);
+    expect(completedAnswer.isComplete).toBe(true);
+  });
+
   it("does not flash retryable transport errors while an answer is still active", () => {
     const retryableError = new Error("stream reconnecting");
 
