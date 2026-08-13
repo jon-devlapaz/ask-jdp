@@ -52,6 +52,32 @@ and stable session secret remain in their configured macOS Keychain items.
   fresh signed session with the question preserved, and completed after reads
   were restored. No shared service or provider process was changed for the test.
 
+## Latest portfolio-pair verification — 2026-08-13
+
+Verified at `2026-08-13T04:16:43Z` after the evidence-backed portfolio refresh:
+
+- Ask JDP repository HEAD: `56d8fb72e174b64ca4c55b9b1bc9e30fa4fa195f`
+  (`56d8fb7`); its application release remains `0a6aba1`, followed only by the
+  deployment-record commit.
+- Portfolio repository HEAD: `b91bed10e9d72445bcca4a1d1c8a74deb44b901a`
+  (`b91bed1`), clean and matching `origin/main`.
+- Portfolio deterministic verification passed its JavaScript syntax checks,
+  five HTML pages, three complete case studies, and all internal links and
+  anchors. The public portfolio index and Ask JDP case-study bytes matched the
+  local revision at SHA-256 `65dd73f958e1a3bc36d986c3ccecabbccf3236faeead8ab4a56da103a77c7082`
+  and `2cd88c71cc97eeb81d8550cc4c59463d95ed37ea53fea2be7d311811ab51d93d`.
+- Ask JDP deterministic verification ran in a disposable worktree at `56d8fb7`
+  and passed 44 Vitest checks, both production builds, and 8 packaging/runtime
+  checks without rewriting the active checkout's `dist/` tree. The public and
+  local client bundle matched at SHA-256
+  `346535508f3accd542736687b49cb31cbd60cbc7b8190e6c1c539ffe251f9730`.
+- A new browser session opened the public portfolio, followed its rendered
+  **Ask JDP** navigation link to the Funnel origin, submitted one harmless
+  supported current-role/operational-results question, and received a bounded
+  answer with the visible reviewed-evidence disclosure. The browser reported no
+  console warnings or errors. No generated answer body, cookie, transcript, or
+  credential was recorded here.
+
 ## Preflight and deploy
 
 1. From the Ask JDP checkout, confirm the intended release with `git rev-parse HEAD`
@@ -187,8 +213,8 @@ SQLite database, or alter Keychain items.
 ## Portfolio discoverability rollback
 
 If Ask JDP should no longer be discoverable from the portfolio, withdraw Funnel
-first, then revert the three integration commits from newest to oldest in the
-portfolio checkout:
+first. For portfolio revisions before `b91bed1`, the original integration was
+introduced by these three commits:
 
 ```sh
 git revert --no-edit 65b50dc
@@ -196,10 +222,25 @@ git revert --no-edit 2ca1b1a
 git revert --no-edit 55d36bf
 ```
 
-Review the resulting diff, push the portfolio's normal `main` deployment path,
-and wait for GitHub Pages to serve the new revision. If a revert conflicts, stop
-and resolve only the Ask JDP link/navigation change; do not discard unrelated
-portfolio work.
+Do not use those reverts on `b91bed1` or later. The evidence-backed portfolio
+refresh reorganized the site and incorporated Ask JDP into the index, its own
+case study, and the evidence ledger; reverting the older integration commits can
+conflict or discard unrelated portfolio work. Instead, make one focused forward
+commit that removes the public Ask JDP navigation and live links from
+`index.html`, `case-studies/ask-jdp.html`, `evidence.html`, and `EVIDENCE.md`
+without reverting the portfolio refresh. Find the exact current references
+before editing:
+
+```sh
+rg -n 'ask-jdp|Ask JDP' index.html case-studies/ask-jdp.html evidence.html EVIDENCE.md
+npm run verify
+```
+
+Review the resulting diff, run `npm run verify` again, push the portfolio's
+normal `main` deployment path, and wait for GitHub Pages to serve the new
+revision. If the focused change conflicts or verification fails, keep Funnel
+withdrawn and stop; do not reset the repository or discard unrelated portfolio
+work.
 
 Post-rollback verification: the portfolio no longer advertises or links Ask JDP,
 the Funnel status reports no public target, the former public endpoint cannot

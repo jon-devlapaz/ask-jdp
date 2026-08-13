@@ -28,7 +28,8 @@
     "test": "vitest run",
     "test:live": "node scripts/live-eval-keychain.mjs",
     "test:sites": "node --test tests/sites-worker.test.mjs",
-    "verify": "npm run check:types && npm test && npm run build && npm run test:sites"
+    "verify": "npm run check:types && npm test && npm run build && npm run test:sites",
+    "verify:receipt": "node scripts/verify-receipt.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-ai": "0.83.0",
