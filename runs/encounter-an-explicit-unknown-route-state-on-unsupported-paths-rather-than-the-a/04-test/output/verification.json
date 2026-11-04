@@ -1,0 +1,23 @@
+{
+  "result": "passed",
+  "candidate": {
+    "head": "b331c266b7780344b9b93bccc2b3f5418859035d",
+    "tree": "bf82110f3b0a18f1a3be67f41aa39c4633088b9580ceaa42b8e641bbb0acdc03"
+  },
+  "inputs": "a936eaa25c4d11d12f89a74b47bce7f04c6a60315c5f7f6a6836efed67c6af4b",
+  "policy": "9dc6e193f7cfe344e4b14c64fff5ff15c2272a6f81a14780667da0eded536b37",
+  "test_lock": "3d6b5b9cb3f3273461f7a539ee15980a426737274fd1948fa1ddfa4c990d463d",
+  "checklist": "57ba36d7351a32661148961de4e997372ceb4e8c53b5cb399645741dc886cbbd",
+  "manual_marks": {
+    "seed-5": "2b091671830fc6242e0b4771c4082799da81def6fa0cb49c61333ebe7c9d1738"
+  },
+  "checklist_items": {},
+  "seed_checks": {
+    "seed-1": "pending",
+    "seed-2": "proven",
+    "seed-3": "proven",
+    "seed-4": "proven",
+    "seed-5": "attested"
+  },
+  "log": "bb248ad87d7eccbc36fe24a125c27ea1b9438486af611a6d39abde9b950fc287"
+}

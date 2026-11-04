@@ -1,0 +1,10 @@
+{
+  "item": "seed-5",
+  "result": "passed",
+  "evidence": "jondev, 2026-11-04 00:41Z: \"seed-5 passed: I looked at the image and it looked good.\" (screenshots of the not-found page at 1280x800 and 390x844)",
+  "reviewer": "jondev",
+  "source": "https://claude.ai/artifact/XbriXJJ1kAWBZQuNmDP4tJ",
+  "seed_definition": "72a7fc862e11b79eb08d73c21e8d4cc195ea757fca3e09fce146be7066561fd2",
+  "candidate": "bf82110f3b0a18f1a3be67f41aa39c4633088b9580ceaa42b8e641bbb0acdc03",
+  "time_ns": 1793752907714910353
+}

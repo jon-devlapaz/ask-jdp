@@ -1,0 +1,92 @@
+{
+  "inputs": "a936eaa25c4d11d12f89a74b47bce7f04c6a60315c5f7f6a6836efed67c6af4b",
+  "decision": "approved",
+  "basis": "confirmed-seed",
+  "reviewer": "confirmed-seed binding (automatic)",
+  "source": "runs/encounter-an-explicit-unknown-route-state-on-unsupported-paths-rather-than-the-a/seed-contract.md",
+  "seed_binding": {
+    "path": "runs/encounter-an-explicit-unknown-route-state-on-unsupported-paths-rather-than-the-a/seed-contract.md",
+    "sha256": "dc9ff5bbfcff4692055c24bbbb4acba42666a82470968a750fbba576628aa6eb",
+    "source": "/home/tinker/.local/share/tinkery/sessions/session-WWOzju/seed-contract.md",
+    "definitions_sha256": "a8a3ba26ef213dd81f134988232a8361b5cb9056b63a38b5d12ce8076cadbb28",
+    "confirmation": {
+      "schema_version": 3,
+      "checks_sha256": "d71a40ee5f2228b2af5d791e05ef477fc4641b0b34d5a8e9322eb80544238761",
+      "session_id": "session-WWOzju",
+      "operator": "agent",
+      "revision": "r1",
+      "source": "confirm",
+      "confirmed_at": "2026-11-03T22:48:50.216009+00:00",
+      "seed_sha256": "dc9ff5bbfcff4692055c24bbbb4acba42666a82470968a750fbba576628aa6eb",
+      "decisions_sha256": "d205e5ee98693c523f969f84885529a5d6141d5892426898f095b2805c825507",
+      "actor": {
+        "action": "typed confirm at this terminal",
+        "by": "terminal",
+        "declaration": "declared: agent",
+        "identity": "declaration is not verified identity"
+      }
+    },
+    "definitions": [
+      {
+        "cwd": ".",
+        "expect": "Evidence covers the full criterion sequence, including visible state, return-link usability, existing conversation isolation, valid resources, browser history, and regressions against the actual serving boundary. HTTP 404 is not required.",
+        "kind": "provisional",
+        "missing": "The implementation, focused routing assertions, browser execution procedure or automation invocation, deployed revision identification, and actual live retest evidence remain to be supplied. No browser runner invocation was established, so no command is proposed for this combined criterion.",
+        "source": "goal: Done when; src/app.ts:144-151; worker/index.js:1-15; README.md:72-80",
+        "statement": "`/foo`, `/chat`, and `/ask/xyz` display an explicit unknown-route state, with a usable return to `/`; Invalid paths do not silently reopen an existing conversation as though the URL were valid; `/`, supported assets, and existing API routes retain their behavior; Direct loads, reload, and browser Back/Forward retain the correct route state; Route regression checks cover the deployed serving path.",
+        "id": "seed-1",
+        "description": "`/foo`, `/chat`, and `/ask/xyz` display an explicit unknown-route state, with a usable return to `/`; Invalid paths do not silently reopen an existing conversation as though the URL were valid; `/`, supported assets, and existing API routes retain their behavior; Direct loads, reload, and browser Back/Forward retain the correct route state; Route regression checks cover the deployed serving path.",
+        "origin": "agent-confirmed-seed",
+        "locked": true
+      },
+      {
+        "cmd": "npm test -- tests/unknown-routes.test.ts",
+        "cwd": ".",
+        "expect": "Proposed: the focused file passes assertions for /foo, /chat, and /ask/xyz returning explicit unknown-route content with a return to / rather than the ordinary Ask shell, alongside root, asset, and API preservation assertions.",
+        "kind": "provisional",
+        "missing": "tests/unknown-routes.test.ts was not found and must be added with behavior-specific assertions, using the existing app.request convention and any required built-client fixtures. The runner is configured, but setup is unverified. The intended red assertion is that an unsupported document response contains the explicit unknown-route state rather than only the ordinary index shell; it should fail against the current fallback or a targeted reversion. This failure has not been observed.",
+        "source": "package.json:28; vitest.config.ts:1-9; tests/backend-security.test.ts:1-51; src/app.ts:144-151",
+        "statement": "Node document routing has a focused regression for unsupported paths while preserving root, supported assets, and API behavior.",
+        "id": "seed-2",
+        "description": "Node document routing has a focused regression for unsupported paths while preserving root, supported assets, and API behavior.",
+        "origin": "agent-confirmed-seed",
+        "locked": true
+      },
+      {
+        "cmd": "npm run test:sites",
+        "cwd": ".",
+        "expect": "Proposed: the Sites test file exits successfully after its unknown-route assertion is revised to require explicit unknown-route behavior with a usable return to /, while existing asset, API/write-request, and artifact assertions pass.",
+        "kind": "cmd",
+        "source": "package.json:30; tests/sites-worker.test.mjs:9-82; AGENTS.md:9",
+        "statement": "Sites routing regressions reject the old unknown-route fallback and preserve the handoff artifact contract.",
+        "id": "seed-3",
+        "description": "Sites routing regressions reject the old unknown-route fallback and preserve the handoff artifact contract.",
+        "origin": "agent-confirmed-seed",
+        "locked": true
+      },
+      {
+        "cmd": "npm run build",
+        "cwd": ".",
+        "expect": "Proposed: the build exits successfully and leaves dist/client/index.html, dist/server/index.js, and dist/.openai/hosting.json for the subsequent Sites artifact assertions. Build success alone does not verify unknown-route behavior.",
+        "kind": "cmd",
+        "source": "package.json:23-26; AGENTS.md:9",
+        "statement": "The build preserves Node, client, and Sites handoff artifacts.",
+        "id": "seed-4",
+        "description": "The build preserves Node, client, and Sites handoff artifacts.",
+        "origin": "agent-confirmed-seed",
+        "locked": true
+      },
+      {
+        "how_to_judge": "Inspect the implemented unknown-route view in the browser for clear unsupported-path messaging and a usable return to /, while preserving the quiet visual foundation rather than introducing a redesigned application surface. This judgment supplements, rather than replaces, route and browser-behavior checks.",
+        "kind": "judge",
+        "source": "goal: Must not redesign the app; AGENTS.md:11-15",
+        "statement": "The explicit unknown-route presentation remains restrained and does not redesign Ask JDP.",
+        "id": "seed-5",
+        "description": "The explicit unknown-route presentation remains restrained and does not redesign Ask JDP.",
+        "origin": "agent-confirmed-seed",
+        "locked": true
+      }
+    ]
+  },
+  "reason": "matches confirmed seed (sha256: dc9ff5bbfcff4692055c24bbbb4acba42666a82470968a750fbba576628aa6eb); seed-2 activated as confirmed: runs `npm test -- tests/unknown-routes.test.ts`"
+}
