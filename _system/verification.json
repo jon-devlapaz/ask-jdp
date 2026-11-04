@@ -1,6 +1,0 @@
-{
-  "require_tink": false,
-  "checks": [
-    {"argv": ["npm", "run", "verify"], "timeout_seconds": 600}
-  ]
-}
