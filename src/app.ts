@@ -4,6 +4,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { isIP } from "node:net";
 import { bodyLimit } from "hono/body-limit";
 import { Hono } from "hono";
+import { unknownRouteDocument } from "./unknown-route";
 import { secureHeaders } from "hono/secure-headers";
 import { AskJdpAssistant } from "./agents/assistant";
 import { checkSocratinkReadiness } from "./agents/provider";
@@ -148,7 +149,9 @@ app.get("/*", async (c, next) => {
   if (c.req.path === "/api" || c.req.path.startsWith("/api/")) {
     return c.json({ error: "not_found" }, 404);
   }
-  return serveClientIndex(c, next);
+  if (c.req.path === "/") return serveClientIndex(c, next);
+  c.header("Cache-Control", "no-store");
+  return c.html(unknownRouteDocument, 404);
 });
 
 export default app;
